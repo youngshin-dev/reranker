@@ -12,6 +12,7 @@ from operator import itemgetter
 optparser = optparse.OptionParser()
 optparser.add_option("-n", "--nbest", dest="nbest", default=os.path.join("data", "train.nbest"), help="N-best file")
 optparser.add_option("-r", "--ref", dest="ref", default=os.path.join("data", "train.fr"), help="reference")
+optparser.add_option("-t", "--target", dest="tar", default=os.path.join("data", "train.en"), help="proper translation")
 
 epoches=5
 tau = 500
@@ -23,6 +24,7 @@ eta=0.1
 (opts, _) = optparser.parse_args()
 
 source = open(opts.ref).read().splitlines()
+target = open(opts.tar).read().splitlines()
 a_translation=namedtuple('a_translation','sentence, features, smoothed_bleu')
 nbests = [[] for i in range(len(source))]
 
@@ -31,7 +33,7 @@ for line in open(opts.nbest):
     (i, sentence, features) = line.strip().split("|||")
     ind=int(i)
     #stats=bleu.bleu_stats(sentence, source[ind])
-    stats=list(bleu.bleu_stats(sentence, source[ind]))
+    stats=list(bleu.bleu_stats(sentence, target[ind]))
     #test1=test[0]
     bleu_smooth_score=bleu.smoothed_bleu(stats)
     feature_vec=numpy.fromstring(features, sep=' ')
@@ -61,7 +63,7 @@ for i in range(0,epoches):
 
         sample=get_sample(nbest)
         #sorted_sample=sample.sort(key=lambda tup:(math.fabs(tup[0].smoothed_bleu-tup[1].smoothed_bleu)))[:xi]
-        sorted_sample=sorted(sample,key=lambda x: math.fabs(x[0].smoothed_bleu-x[1].smoothed_bleu))
+        sorted_sample=sorted(sample,key=lambda x: math.fabs(x[0].smoothed_bleu-x[1].smoothed_bleu))[:xi]
         mistakes=0
         for item in sorted_sample:
             feature1=item[0].features
